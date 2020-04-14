@@ -72,10 +72,12 @@ class OrderApiService {
   ): OrderId {
     const response = ApiRequest.mockRequest({
       userAccountId: userAccountId.value,
-      itemId,
-      orderId,
+      itemId: itemId.value,
+      orderId: orderId.value,
     });
-    return response.orderId;
+
+    // or just create a new instance without the try parse
+    return new OrderId(response.orderId);
   }
 }
 
