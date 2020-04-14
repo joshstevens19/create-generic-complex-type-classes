@@ -1,9 +1,13 @@
+import ItemId from '../item-id';
+import OrderId from '../order-id';
+import UserAccountId from '../user-account-id';
+
 class UserService {
   private _userApiService: UserApiService = new UserApiService();
 
   constructor() {}
 
-  public getUserAccountId(): string {
+  public getUserAccountId(): UserAccountId {
     return this._userApiService.getUserAccountId();
   }
 }
@@ -11,10 +15,15 @@ class UserService {
 class UserApiService {
   constructor() {}
 
-  public getUserAccountId(): string {
-    const response = ApiRequest.mockRequest('12345');
+  public getUserAccountId(): UserAccountId {
+    const response = ApiRequest.mockRequest(new UserAccountId('12345').value);
 
-    return response;
+    const userAccountParsed = UserAccountId.tryParse(response);
+    if (userAccountParsed.parsed) {
+      return userAccountParsed.result;
+    }
+
+    throw new Error('Api did not return proper user account id type');
   }
 }
 
@@ -22,15 +31,15 @@ class OrderService {
   private _orderApiService: OrderApiService = new OrderApiService();
   constructor() {}
 
-  public amendOrder(userAccountId: string, orderId: string): string {
+  public amendOrder(userAccountId: UserAccountId, orderId: OrderId): OrderId {
     return this._orderApiService.amendOrder(userAccountId, orderId);
   }
 
   public getOrderItemUserAccountId(
-    userAccountId: string,
-    itemId: string,
-    orderId: string
-  ): string {
+    userAccountId: UserAccountId,
+    itemId: ItemId,
+    orderId: OrderId
+  ): OrderId {
     return this._orderApiService.getOrderItemUserAccountId(
       userAccountId,
       itemId,
@@ -42,26 +51,33 @@ class OrderService {
 class OrderApiService {
   constructor() {}
 
-  public amendOrder(userAccountId: string, orderId: string): string {
+  public amendOrder(userAccountId: UserAccountId, orderId: OrderId): OrderId {
     const response = ApiRequest.mockRequest({
-      userAccountId,
-      orderId,
+      userAccountId: userAccountId.value,
+      orderId: orderId.value,
     });
 
-    return response.orderId;
+    const orderIdParsed = OrderId.tryParse(response.orderId);
+    if (orderIdParsed.parsed) {
+      return orderIdParsed.result;
+    }
+
+    throw new Error('Api did not return proper user account id type');
   }
 
   public getOrderItemUserAccountId(
-    userAccountId: string,
-    itemId: string,
-    orderId: string
-  ): string {
+    userAccountId: UserAccountId,
+    itemId: ItemId,
+    orderId: OrderId
+  ): OrderId {
     const response = ApiRequest.mockRequest({
-      userAccountId,
-      itemId,
-      orderId,
+      userAccountId: userAccountId.value,
+      itemId: itemId.value,
+      orderId: orderId.value,
     });
-    return response.orderId;
+
+    // or just create a new instance without the try parse
+    return new OrderId(response.orderId);
   }
 }
 
@@ -79,7 +95,7 @@ const example = () => {
   const userService = new UserService();
   const orderService = new OrderService();
 
-  const wellKnownOrderId = '92b7c347-f7bc-4d26-ab47-88ab97981d84';
+  const wellKnownOrderId = new OrderId('92b7c347-f7bc-4d26-ab47-88ab97981d84');
 
   const userAccountId = userService.getUserAccountId();
   console.log(userAccountId);
@@ -92,13 +108,13 @@ const example = () => {
 
   const getOrderItemUserAccountId = orderService.getOrderItemUserAccountId(
     userAccountId,
-    'eab882db-eEc1-4c67-aa1c-ca10f09ed2f1',
+    new ItemId('eab882db-eEc1-4c67-aa1c-ca10f09ed2f1'),
     wellKnownOrderId
   );
 
   console.log(getOrderItemUserAccountId);
 
-  console.log('92b882db-eEc1-4c67-aa1c-ca10f09ed2f1');
+  console.log(new OrderId('92b882db-eEc1-4c67-aa1c-ca10f09ed2f1'));
 };
 
 example();
